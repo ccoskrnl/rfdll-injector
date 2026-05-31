@@ -75,18 +75,3 @@ pub unsafe fn being_debugged_by_peb() -> bool {
 
     return being_debugged != 0;
 }
-
-pub unsafe fn etw_session_hijack() -> Result<(), anyhow::Error> {
-
-    let handle = unsafe {
-        GetCurrentProcess()
-    };
-    let h_token: *mut HANDLE = null_mut();
-    let status = unsafe {
-        nt_open_process_token(handle, TOKEN_QUERY, &h_token as *mut HANDLE, NT_SSN[NtIndex::NtOpenProcessToken as usize].ssn, NT_SSN[NtIndex::NtOpenProcessToken as usize].syscall_ret)
-    }
-
-
-
-    Ok(())
-}

