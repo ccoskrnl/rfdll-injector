@@ -52,7 +52,7 @@ type LookupPrivilegeValueAFn = unsafe extern "system" fn(
     lp_luid: *mut LUID,
 ) -> i32;
 
-pub fn enable_debug_privilege() -> anyhow::Result<()>
+pub fn enable_debug_privilege() -> Result<()>
 {
 
     unsafe {
