@@ -44,9 +44,10 @@ pub enum NtIndex {
     NtOpenProcessToken = 15,
     NtQueryInformationToken = 16,
     NtAdjustPrivilegesToken = 17,
+    NtDuplicateObject = 18
 }
 
-const NT_FUNCTION_COUNT: usize = 18;
+const NT_FUNCTION_COUNT: usize = 19;
 
 // ═══════════════════════════════════════════════════
 // NtAllocateVirtualMemory (ZwAllocateVirtualMemory)
@@ -130,6 +131,27 @@ pub unsafe extern "win64" fn zw_write_virtual_memory(
     number_of_bytes_written: *mut usize,
     ssn:                    u32,
     syscall_ret:            *mut u8,
+) -> i32 {
+    naked_asm!(
+        "mov r10, rcx",
+        "mov eax, dword ptr [rsp + 48]",
+        "jmp qword ptr [rsp + 56]"
+    )
+}
+
+// ═══════════════════════════════════════════════════
+// NtReadVirtualMemory (ZwReadVirtualMemory)
+// ═══════════════════════════════════════════════════
+#[unsafe(naked)]
+#[unsafe(no_mangle)]
+pub unsafe extern "win64" fn zw_read_virtual_memory(
+    process_handle:         HANDLE,
+    base_address:           *mut c_void,
+    buffer:                 *mut c_void,
+    number_of_bytes_to_read: usize,
+    number_of_bytes_read: *mut usize,
+    ssn:                    u32,
+    syscall_ret:            *mut u8
 ) -> i32 {
     naked_asm!(
         "mov r10, rcx",
@@ -236,6 +258,28 @@ pub unsafe extern "win64" fn nt_adjust_privileges_token(
     )
 }
 
+// ═══════════════════════════════════════════════════
+// NtDuplicateObject
+// ═══════════════════════════════════════════════════
+#[unsafe(naked)]
+#[unsafe(no_mangle)]
+pub unsafe extern "win64" fn nt_duplicate_object(
+    source_process_handle:      HANDLE,
+    source_handle:              HANDLE,
+    target_process_handle:      HANDLE,
+    target_handle:              *mut HANDLE,
+    desired_access:             u32,
+    handle_attributes:          u64,
+    options:                    u64,
+    ssn:                        u32,
+    syscall_addr:               *mut u8,
+) -> i32 {
+    naked_asm!(
+        "mov r10, rcx",
+        "mov eax, dword ptr [rsp + 64]",
+        "jmp qword ptr [rsp + 72]"
+    )
+}
 
 macro_rules! set_nt_ssn {
     ($parser:ident, $func_name:expr, $func_index:expr) => {
