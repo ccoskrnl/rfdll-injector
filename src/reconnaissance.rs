@@ -60,12 +60,12 @@ pub fn enable_debug_privilege() -> Result<()>
         let mut process_handle : HANDLE = GetCurrentProcess();
         let token_handle: HANDLE = null_mut();
 
-        let status = nt_open_process_token(
+        let status = zw_open_process_token(
             process_handle,
             TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, 
             &token_handle as * const HANDLE as *mut HANDLE, 
-            NT_SSN[NtIndex::NtOpenProcessToken as usize].ssn, 
-            NT_SSN[NtIndex::NtOpenProcessToken as usize].syscall_ret
+            ZW_SSN[ZwIndex::ZwOpenProcessToken as usize].ssn, 
+            ZW_SSN[ZwIndex::ZwOpenProcessToken as usize].syscall_ret
         );
 
         if status != STATUS_SUCCESS {
@@ -110,15 +110,15 @@ pub fn enable_debug_privilege() -> Result<()>
         new_state.Privileges[0].Luid = luid;
         new_state.Privileges[0].Attributes = 2;
 
-        let status = nt_adjust_privileges_token(
+        let status = zw_adjust_privileges_token(
             token_handle, 
             0, 
             &mut new_state, 
             std::mem::size_of::<TOKEN_PRIVILEGES>() as u32, 
             null_mut(), 
             null_mut(), 
-            NT_SSN[NtIndex::NtAdjustPrivilegesToken as usize].ssn, 
-            NT_SSN[NtIndex::NtAdjustPrivilegesToken as usize].syscall_ret
+            ZW_SSN[ZwIndex::ZwAdjustPrivilegesToken as usize].ssn, 
+            ZW_SSN[ZwIndex::ZwAdjustPrivilegesToken as usize].syscall_ret
         );
 
         if status != STATUS_SUCCESS {

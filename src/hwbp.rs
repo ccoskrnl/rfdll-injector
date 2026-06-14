@@ -203,8 +203,8 @@ unsafe fn set_dr_with_ssn(dr: &DR, address: *const u8, ssn: u32) -> Result<()> {
         let status = zw_get_context_thread(
             GetCurrentThread(),
         &mut ctx as *mut CONTEXT,
-        NT_SSN[NtIndex::ZwGetContextThread as usize].ssn,
-        NT_SSN[NtIndex::ZwGetContextThread as usize].syscall_ret
+        ZW_SSN[ZwIndex::ZwGetContextThread as usize].ssn,
+        ZW_SSN[ZwIndex::ZwGetContextThread as usize].syscall_ret
         );
 
         if status != 0 {
@@ -221,8 +221,8 @@ unsafe fn set_dr_with_ssn(dr: &DR, address: *const u8, ssn: u32) -> Result<()> {
         let status = zw_set_context_thread(
             GetCurrentThread(),
             &mut ctx as *mut CONTEXT,
-            NT_SSN[NtIndex::ZwSetContextThread as usize].ssn,
-            NT_SSN[NtIndex::ZwSetContextThread as usize].syscall_ret
+            ZW_SSN[ZwIndex::ZwSetContextThread as usize].ssn,
+            ZW_SSN[ZwIndex::ZwSetContextThread as usize].syscall_ret
         );
 
         if status != 0 {
@@ -284,8 +284,8 @@ pub unsafe fn unset_hwbp(dr: &DR) -> Result<()> {
         let status = zw_get_context_thread(
             GetCurrentThread(),
             &mut ctx as *mut CONTEXT,
-            NT_SSN[NtIndex::ZwGetContextThread as usize].ssn,
-            NT_SSN[NtIndex::ZwGetContextThread as usize].syscall_ret
+            ZW_SSN[ZwIndex::ZwGetContextThread as usize].ssn,
+            ZW_SSN[ZwIndex::ZwGetContextThread as usize].syscall_ret
         );
 
         if status != 0 {
@@ -300,8 +300,8 @@ pub unsafe fn unset_hwbp(dr: &DR) -> Result<()> {
         let status = zw_set_context_thread(
             GetCurrentThread(),
             &mut ctx as *mut CONTEXT,
-            NT_SSN[NtIndex::ZwSetContextThread as usize].ssn,
-            NT_SSN[NtIndex::ZwSetContextThread as usize].syscall_ret
+            ZW_SSN[ZwIndex::ZwSetContextThread as usize].ssn,
+            ZW_SSN[ZwIndex::ZwSetContextThread as usize].syscall_ret
         );
 
         if status != 0 {
