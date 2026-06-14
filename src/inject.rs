@@ -136,19 +136,21 @@ pub fn get_process_pid_by_name(target_name_wide: &[u16]) -> Option<u32> {
 
 pub fn inject_dll_into_process(target_name_wide: &[u16], rf_dll: &PeFileParser, yolo: usize) -> anyhow::Result<()> {
 
+    // let pid = crate::handle_steal::find_process_pid(target_name)
+    //     .map_err(|e| anyhow::anyhow!("[ERROR] Could not find target process: {}", e))?;
+
     let pid = get_process_pid_by_name(target_name_wide)
-        .ok_or_else( || anyhow::anyhow!("[ERROR] Process not found.") )?;
+    .ok_or_else( || anyhow::anyhow!("[ERROR] Process not found.") )?;
 
     debug_println!("[INFO] Found pid: {}.", pid);
 
 
     unsafe 
     {
+        let desired_access = PROCESS_CREATE_THREAD | PROCESS_VM_OPERATION | PROCESS_VM_WRITE;
 
-
-        // for _i in 1..=5 {
-        //     thread::sleep(Duration::from_secs(1));
-        // }
+        // let process_handle = crate::handle_steal::steal_process_handle(pid, desired_access)
+        //     .map_err(|e| anyhow::anyhow!("[ERROR] Failed to steal process handle: {}", e))?;
 
         let mut process_handle: HANDLE = null_mut();
         let client_id = CLIENT_ID {
@@ -165,8 +167,6 @@ pub fn inject_dll_into_process(target_name_wide: &[u16], rf_dll: &PeFileParser, 
             SecurityQualityOfService: null_mut(),
         }; 
 
-        let desired_access = PROCESS_CREATE_THREAD | PROCESS_VM_OPERATION | PROCESS_VM_WRITE;
-
         let status = zw_open_process(
             &mut process_handle as *mut HANDLE, 
             desired_access, 
@@ -179,6 +179,8 @@ pub fn inject_dll_into_process(target_name_wide: &[u16], rf_dll: &PeFileParser, 
         if status != STATUS_SUCCESS {
             return Err(anyhow::anyhow!("[ERROR] Failed to open proc: 0x{:X}.", status));
         }
+
+
 
         let dll_data = rf_dll.data;
         let base_address: *mut c_void  = null_mut();
