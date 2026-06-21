@@ -19,11 +19,10 @@ def pad_pkcs7(data: bytes, block_size: int = 16) -> bytes:
     return data + bytes([pad_len] * pad_len)
 
 
-def random_split(n: int) -> tuple[bytes, bytes]:
-    """Return (half1, half2) where half1 XOR half2 == random n bytes."""
-    real = os.urandom(n)
-    mask = os.urandom(n)
-    return (bytes(a ^ b for a, b in zip(real, mask)), mask)
+def split_secret(secret: bytes) -> tuple[bytes, bytes]:
+    """Return (half1, half2) where half1 XOR half2 == `secret`."""
+    mask = os.urandom(len(secret))
+    return (bytes(a ^ b for a, b in zip(secret, mask)), mask)
 
 
 def fmt_array(name: str, data: bytes, prefix: str = "    ") -> str:
@@ -68,8 +67,8 @@ def encrypt_file(in_path: str, out_path: str) -> tuple[bytes, bytes]:
 
 
 def print_rust_snippet(key: bytes, iv: bytes):
-    half1_k, half2_k = random_split(32)
-    half1_i, half2_i = random_split(16)
+    half1_k, half2_k = split_secret(key)
+    half1_i, half2_i = split_secret(iv)
     print("=" * 72)
     print("Rust key material — paste into src/main.rs:")
     print("=" * 72)

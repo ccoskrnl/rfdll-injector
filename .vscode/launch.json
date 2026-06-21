@@ -12,7 +12,7 @@
             "cargo": {
                 "args": [
                     "run",
-                    "--bin=Injector"
+                    "--bin=rfdll-injector"
                 ]
             },
             "args": []
@@ -24,7 +24,7 @@
             "cargo": {
                 "args": [
                     "test",
-                    "--bin=Injector"
+                    "--bin=rfdll-injector"
                 ]
             }
         }
